@@ -1,0 +1,69 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with role-based access control (authority vs public)",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "format": "email", "maxLength": 150 },
+        "role": { "type": "string", "enum": ["authority", "public"] },
+        "department": { "type": "string", "maxLength": 150 },
+        "badgeId": { "type": "string", "maxLength": 50 },
+        "jurisdiction": { "type": "string", "maxLength": 150 },
+        "createdAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["uid", "name", "email", "role"]
+    },
+    "FloodAlert": {
+      "title": "FloodAlert",
+      "description": "Emergency flood warning broadcast dispatched to public and response cells",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "area": { "type": "string", "maxLength": 150 },
+        "areaId": { "type": "string", "maxLength": 100 },
+        "severity": { "type": "string", "enum": ["advisory", "warning", "critical"] },
+        "message": { "type": "string", "maxLength": 1000 },
+        "expectedTime": { "type": "string", "maxLength": 100 },
+        "createdAt": { "type": "string", "maxLength": 50 },
+        "status": { "type": "string", "enum": ["active", "resolved"] },
+        "issuedBy": { "type": "string", "maxLength": 150 },
+        "floodProbability": { "type": "number" },
+        "warningLeadTime": { "type": "string", "maxLength": 50 },
+        "source": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["id", "area", "severity", "message", "status"]
+    },
+    "EmergencyAction": {
+      "title": "EmergencyAction",
+      "description": "Standard Operating Procedure tactical response dispatch action item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "zoneId": { "type": "string", "maxLength": 100 },
+        "zoneName": { "type": "string", "maxLength": 150 },
+        "action": { "type": "string", "maxLength": 500 },
+        "assignedUnit": { "type": "string", "maxLength": 150 },
+        "priority": { "type": "string", "enum": ["urgent", "high", "standard"] },
+        "completed": { "type": "boolean" }
+      },
+      "required": ["id", "zoneId", "action", "completed"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile records containing role attribute"
+    },
+    "/alerts/{alertId}": {
+      "schema": "FloodAlert",
+      "description": "Broadcast emergency alerts accessible publicly and authored by authorities"
+    },
+    "/emergency_actions/{actionId}": {
+      "schema": "EmergencyAction",
+      "description": "Emergency tactical checklist items"
+    }
+  }
+}

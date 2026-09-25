@@ -1,0 +1,85 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Authority role detection: Checks Firebase Auth email or role in users/{uid}
+    function isAuthority() {
+      return isSignedIn() && (
+        request.auth.token.email == 'authority@floodguard.gov' ||
+        request.auth.token.email == 'authority@example.com' ||
+        request.auth.token.email == 'anusha.vadegeri@gmail.com' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'authority')
+      );
+    }
+
+    // Connection testing
+    match /test/connection {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      // Authenticated users can read their own profile; authorities can read any user profile
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAuthority());
+      allow list: if isAuthority();
+
+      // On creation: Document ID must match request.auth.uid.
+      // Public users can ONLY create their own profile with role == 'public'.
+      // Passwords must NEVER be stored in Firestore.
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidId(userId) && (
+        (incoming().role == 'public' && !incoming().keys().hasAny(['password', 'pass'])) ||
+        (isAuthority() && !incoming().keys().hasAny(['password', 'pass']))
+      );
+
+      // On update: Users CANNOT change their own role from 'public' to 'authority'.
+      // 'role' field is strictly immutable for non-authorities.
+      allow update: if isSignedIn() && request.auth.uid == userId && (
+        (!incoming().diff(existing()).affectedKeys().hasAny(['role', 'email']) && !incoming().keys().hasAny(['password', 'pass'])) ||
+        isAuthority()
+      );
+
+      allow delete: if isAuthority();
+    }
+
+    // Public Alerts Collection (Preserved)
+    match /alerts/{alertId} {
+      // Public citizens can read active emergency alerts
+      allow read: if true;
+
+      // Only authorized disaster officers can create, update, or resolve alerts
+      allow create: if isValidId(alertId) && isAuthority();
+      allow update: if isValidId(alertId) && isAuthority();
+      allow delete: if isAuthority();
+    }
+
+    // Tactical Emergency Actions Collection (Preserved)
+    match /emergency_actions/{actionId} {
+      allow read: if true;
+      allow write: if isAuthority();
+    }
+  }
+}

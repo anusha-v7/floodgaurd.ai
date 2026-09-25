@@ -1,0 +1,6 @@
+{
+  "name": "FloodGuard AI",
+  "description": "AI-Powered Flood Early Warning and Inundation Prediction Platform. Predict. Warn. Respond.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
