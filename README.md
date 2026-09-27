@@ -121,7 +121,7 @@ npm install
 code
 Bash
 npm run dev
-The app will be accessible at http://localhost:3000.
+The app will be accessible at https://floodgaurd-ai.netlify.app/public/safety
 4. Build for production
 code
 Bash
